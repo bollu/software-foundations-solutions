@@ -1,0 +1,12 @@
+DIGEST 1d9b71eaaff9e54d6a94aacbb71514a7
+FPostscriptTest
+R61:70 Postscript <> <> lib
+ax 83:89 <> MISSING
+mod 106:110 <> Check
+R168:174 PostscriptTest <> MISSING defax
+R168:174 PostscriptTest <> MISSING defax
+R340:346 PostscriptTest <> MISSING defax
+R340:346 PostscriptTest <> MISSING defax
+R431:435 PostscriptTest Check <> mod
+R454:463 Postscript <> <> lib
+R486:489 Coq.Init.Logic <> True ind

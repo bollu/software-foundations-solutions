@@ -1,0 +1,12 @@
+DIGEST 449007bb5ae95fe8f37c40d52fc4aa17
+FBibTest
+R61:63 Bib <> <> lib
+ax 76:82 <> MISSING
+mod 99:103 <> Check
+R161:167 BibTest <> MISSING defax
+R161:167 BibTest <> MISSING defax
+R333:339 BibTest <> MISSING defax
+R333:339 BibTest <> MISSING defax
+R424:428 BibTest Check <> mod
+R447:449 Bib <> <> lib
+R472:475 Coq.Init.Logic <> True ind

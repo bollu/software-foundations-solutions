@@ -1,0 +1,12 @@
+DIGEST 0c8efb42dc7f6d8a7c6829d2b3de9f5a
+FPrefaceTest
+R61:67 Preface <> <> lib
+ax 80:86 <> MISSING
+mod 103:107 <> Check
+R165:171 PrefaceTest <> MISSING defax
+R165:171 PrefaceTest <> MISSING defax
+R337:343 PrefaceTest <> MISSING defax
+R337:343 PrefaceTest <> MISSING defax
+R428:432 PrefaceTest Check <> mod
+R451:457 Preface <> <> lib
+R480:483 Coq.Init.Logic <> True ind
