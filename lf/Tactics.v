@@ -186,7 +186,8 @@ Proof.
     adding [with (m:=[c,d])] to the invocation of [apply]. *)
 
   apply trans_eq with (m:=[c;d]).
-  apply eq1. apply eq2.   Qed.
+  apply eq1. apply eq2.
+Qed.
 
 (** Actually, we usually don't have to include the name [m] in
     the [with] clause; Coq is often smart enough to figure out which
@@ -199,7 +200,13 @@ Example trans_eq_exercise : forall (n m o p : nat),
      (n + p) = m ->
      (n + p) = (minustwo o).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n mmm o pp.
+  intros m_minustwo.
+  intros n_plus_pp_is_mm.
+  apply trans_eq with (m := mmm).
+  exact n_plus_pp_is_mm.
+  exact m_minustwo.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -259,7 +266,9 @@ Theorem inversion_ex1 : forall (n m o : nat),
   [n; m] = [o; o] ->
   [n] = [m].
 Proof.
-  intros n m o H. inversion H. reflexivity. Qed.
+  intros n m o H.
+  inversion H.
+  reflexivity. Qed.
 
 (** We can name the equations that [inversion] generates with an
     [as ...] clause: *)
@@ -276,7 +285,11 @@ Example inversion_ex3 : forall (X : Type) (x y z : X) (l j : list X),
   y :: l = x :: j ->
   x = y.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H0.
+  inversion H.
+  reflexivity.
+  Qed.
 (** [] *)
 
 (** When used on a hypothesis involving an equality between
@@ -318,7 +331,8 @@ Theorem inversion_ex4 : forall (n : nat),
   S n = O ->
   2 + 2 = 5.
 Proof.
-  intros n contra. inversion contra. Qed.
+  intros n contra.
+  inversion contra. Qed.
 
 Theorem inversion_ex5 : forall (n m : nat),
   false = true ->
@@ -340,7 +354,9 @@ Example inversion_ex6 : forall (X : Type)
   y :: l = z :: j ->
   x = z.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+Qed.
 (** [] *)
 
 (** To summarize this discussion, suppose [H] is a hypothesis in the
@@ -408,8 +424,11 @@ Theorem silly3' : forall (n : nat),
   true = beq_nat (S (S n)) 7.
 Proof.
   intros n eq H.
-  symmetry in H. apply eq in H. symmetry in H.
-  apply H.  Qed.
+  symmetry in H.
+  apply eq in H.
+  symmetry in H.
+  apply H.
+Qed.
 
 (** Forward reasoning starts from what is _given_ (premises,
     previously proven theorems) and iteratively draws conclusions from
@@ -431,6 +450,21 @@ Theorem plus_n_n_injective : forall n m,
      n = m.
 Proof.
   intros n. induction n as [| n'].
+  intros H H2.
+  simpl in H2.
+  assert(forall h, 0 = h + h -> h = 0).
+  induction h.
+  simpl. reflexivity.
+  intros.
+  
+
+
+
+  (** apply plus_n_Sm. **)
+  
+  
+
+
     (* FILL IN HERE *) Admitted.
 (** [] *)
 
