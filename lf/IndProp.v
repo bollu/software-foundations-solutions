@@ -1,5 +1,3 @@
-(** * IndProp: Inductively Defined Propositions *)
-
 Set Warnings "-notation-overridden,-parsing".
 Require Export Logic.
 Require Coq.omega.Omega.
@@ -130,7 +128,10 @@ Qed.
 Theorem ev_double : forall n,
   ev (double n).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros n. induction n.
+  simpl. apply ev_0.
+  simpl. apply ev_SS. apply IHn.
+Qed.
 (** [] *)
 
 (* ################################################################# *)
@@ -274,12 +275,16 @@ Proof.
 Theorem SSSSev__even : forall n,
   ev (S (S (S (S n)))) -> ev n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros H evssssn.
+  inversion evssssn.
+  inversion H1.
+  exact H3.
+  Qed.
 
 Theorem even5_nonsense :
   ev 5 -> 2 + 2 = 9.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros H. inversion H. inversion H1. inversion H3. Qed.
 (** [] *)
 
 (** The way we've used [inversion] here may seem a bit
@@ -347,6 +352,7 @@ Proof.
     { intros [k' Hk']. rewrite Hk'. exists (S k'). reflexivity. }
     apply I. (* reduce the original goal to the new one *)
 
+(* Admitted on purpose *)
 Admitted.
 
 (* ================================================================= *)
@@ -403,10 +409,22 @@ Qed.
     technique, to help you familiarize yourself with it. *)
 
 (** **** Exercise: 2 stars (ev_sum)  *)
-Theorem ev_sum : forall n m, ev n -> ev m -> ev (n + m).
+Theorem ev_sum : forall n mm, ev n -> ev mm -> ev (n + mm).
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros n. intros mm.
+  intros ev_n.  intros ev_mm.
+  induction ev_n.
+  induction ev_mm.
+  simpl.
+  exact ev_0.
+  simpl.
+  apply ev_SS. exact ev_mm.
+  simpl. apply ev_SS. exact IHev_n.
+Qed.
+
+
+  
+
 
 (** **** Exercise: 4 stars, advanced, optional (ev_alternate)  *)
 (** In general, there may be multiple ways of defining a
@@ -422,9 +440,29 @@ Inductive ev' : nat -> Prop :=
     one.  (You may want to look at the previous theorem when you get
     to the induction step.) *)
 
+Theorem ev'_add_2: forall n, ev' n -> ev'(n + 2).
+  intros.
+  apply (ev'_sum n 2 H ev'_2).
+Qed.
+
 Theorem ev'_ev : forall n, ev' n <-> ev n.
 Proof.
- (* FILL IN HERE *) Admitted.
+  intros.
+  split.
+  intros.
+  - induction H.
+    apply ev_0.
+    apply ev_SS. apply ev_0.
+    apply ev_sum.
+    exact IHev'1.
+    exact IHev'2.
+  - intros.
+    induction H.
+    exact ev'_0.
+    apply (ev'_sum 2 n).
+    exact ev'_2.
+    exact IHev.
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, advanced, recommended (ev_ev__ev)  *)
@@ -434,7 +472,13 @@ Proof.
 Theorem ev_ev__ev : forall n m,
   ev (n+m) -> ev n -> ev m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H0.
+  exact H.
+  simpl in H.
+  inversion H.
+  apply (IHev H2).
+Qed.
 (** [] *)
 
 (** **** Exercise: 3 stars, optional (ev_plus_plus)  *)
@@ -445,6 +489,16 @@ Proof.
 Theorem ev_plus_plus : forall n m p,
   ev (n+m) -> ev (n+p) -> ev (m+p).
 Proof.
+  intros.
+  rewrite ev_even_iff in H.
+  rewrite ev_even_iff in H0.
+  destruct H.
+  destruct H0.
+  rewrite ev_even_iff.
+  (* 2x = n + m. 2 x0 = n + p. 2x + 2x0 - 2n = m + p *)
+  assert(double (x + x0 - n) = m + p).
+  rewrite double_plus.
+
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
@@ -533,6 +587,32 @@ Inductive next_even : nat -> nat -> Prop :=
 (** Define an inductive binary relation [total_relation] that holds
     between every pair of natural numbers. *)
 
+Inductive total_relation : nat -> nat -> Prop :=
+| eqr : forall n, total_relation n n
+| ltr: forall n m, le n m -> total_relation n m
+| gtr: forall n m, gt n m -> total_relation n m.
+
+Theorem relation_is_total_relation: forall n m : nat, total_relation n m.
+  intros. induction n. induction m.
+  exact (eqr 0).
+  inversion IHm.
+  assert (0 <= 1).
+  exact (le_S 0 0 (le_n 0)).
+  exact (ltr 0 1 (le_S 0 0 (le_n 0))).
+  apply le_S in H.
+  exact (ltr 0 (S m) H).
+  inversion H.
+  inversion IHn.
+  assert (S m > m).
+  auto.
+  apply gtr.
+  exact H1.
+  inversion H.
+  assert (S m > m). auto. apply gtr. exact H3.
+  assert (S n <= S m1).
+  Admitted.
+                           
+
 (* FILL IN HERE *)
 (** [] *)
 
@@ -548,42 +628,97 @@ Inductive next_even : nat -> nat -> Prop :=
     we are going to need later in the course.  The proofs make good
     practice exercises. *)
 
+Lemma le_drop_S_from_left: forall m n, S m <= n -> m <= n.
+  intros.
+  induction H.
+  apply le_S.
+  apply le_n.
+  inversion H.
+  apply le_S. apply le_S. apply le_n.
+  apply le_S. rewrite H1. exact IHle.
+Qed.
+
+Lemma le_add_S_from_right: forall m n, m <= n -> m <= S n.
+  intros.
+  induction H.
+  apply le_S. apply le_n.
+  apply le_S. exact IHle.
+Qed.
+
 Lemma le_trans : forall m n o, m <= n -> n <= o -> m <= o.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H.
+  exact H0.
+  apply le_drop_S_from_left in H0.
+  apply (IHle H0).
+Qed.
+
 
 Theorem O_le_n : forall n,
   0 <= n.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction n.
+  apply le_n.
+  apply le_S.
+  exact IHn.
 
 Theorem n_le_m__Sn_le_Sm : forall n m,
   n <= m -> S n <= S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  induction H.
+  apply le_n.
+  apply le_add_S_from_right.
+  exact IHle.
+Qed.
 
 Theorem Sn_le_Sm__n_le_m : forall n m,
   S n <= S m -> n <= m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  inversion H.
+  apply le_n.
+  apply le_drop_S_from_left in H1.
+  exact H1.
+Qed.
 
 Theorem le_plus_l : forall a b,
   a <= a + b.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  generalize dependent a.
+  induction b.
+  intros.
+  rewrite <- plus_n_O.
+  apply le_n.
+  intros.
+  rewrite <- plus_n_Sm.
+  apply le_add_S_from_right.
+  apply IHb.
+Qed.
+
 
 Theorem plus_lt : forall n1 n2 m,
   n1 + n2 < m ->
   n1 < m /\ n2 < m.
 Proof.
- unfold lt.
+  unfold lt.
+  intros.
+  generalize dependent m.
+  induction m.
+  intros.
  (* FILL IN HERE *) Admitted.
 
 Theorem lt_S : forall n m,
   n < m ->
   n < S m.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  apply le_add_S_from_right. auto.
+Qed.
+  
 
 Theorem leb_complete : forall n m,
   leb n m = true -> n <= m.
@@ -1630,4 +1765,4 @@ Proof.
 (** [] *)
 
 
-(** $Date: 2017-09-06 10:45:52 -0400 (Wed, 06 Sep 2017) $ *)
+
