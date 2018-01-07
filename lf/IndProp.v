@@ -1,6 +1,7 @@
 Set Warnings "-notation-overridden,-parsing".
 Require Export Logic.
 Require Coq.omega.Omega.
+Require List.
 
 (* ################################################################# *)
 (** * Inductively Defined Propositions *)
@@ -663,6 +664,7 @@ Proof.
   apply le_n.
   apply le_S.
   exact IHn.
+Qed.
 
 Theorem n_le_m__Sn_le_Sm : forall n m,
   n <= m -> S n <= S m.
@@ -1056,31 +1058,207 @@ Qed.
 Lemma empty_is_empty : forall T (s : list T),
   ~ (s =~ EmptySet).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold not.
+  intros H.
+  inversion H.
+Qed.
 
 Lemma MUnion' : forall T (s : list T) (re1 re2 : @reg_exp T),
   s =~ re1 \/ s =~ re2 ->
   s =~ Union re1 re2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  destruct H.
+  apply MUnionL.
+  exact H.
+  apply MUnionR.
+  exact H.
+Qed.
 
 (** The next lemma is stated in terms of the [fold] function from the
     [Poly] chapter: If [ss : list (list T)] represents a sequence of
     strings [s1, ..., sn], then [fold app ss []] is the result of
     concatenating them all together. *)
 
+Theorem in_inv_fwd: forall T (l: list T) (needle : T) (consd : T), In needle (consd :: l) -> consd = needle \/ In needle l.
+  intros T l.
+  induction l.
+  intros.
+  left.
+  simpl in H.
+  destruct H.
+  exact H.
+  tauto.
+  intros.
+  destruct H.
+  rewrite H. simpl.
+  auto.
+  inversion H.
+  right. exact H.
+  right. exact H.
+Qed.
+
+Theorem in_inv_bwd: forall T (l: list T) (needle: T) (consd: T), consd = needle \/ In needle l -> In needle (consd :: l).
+  intros T l. induction l.
+  intros.
+  destruct H.
+  rewrite H. simpl. auto.
+  inversion H.
+  intros.
+  unfold In.
+  destruct H.
+  left.
+  exact H.
+  right.
+  exact H.
+Qed.
+
+Theorem in_inv: forall T (l: list T) (needle : T) (consd : T), In needle (consd :: l) <-> consd = needle \/ In needle l.
+Proof.
+  split.
+  apply (in_inv_fwd T l needle consd).
+  apply (in_inv_bwd T l needle consd).
+Qed.
+  
+
+  
+
+
+
+Theorem in_cons: forall T (l: list T) (needle: T) (consd: T), In needle l -> In needle (cons consd l).
+  intros T l. induction l.
+  intros.
+  inversion H.
+  intros.
+  apply in_inv.
+  apply in_inv in H.
+  destruct H.
+  rewrite H.
+  simpl. auto.
+  specialize (IHl needle consd).
+  specialize (IHl H).
+  assert(In needle (x::l)).
+  rewrite in_inv.
+  right. exact H.
+  right. exact H0.
+Qed.
+
+
 Lemma MStar' : forall T (ss : list (list T)) (re : reg_exp),
   (forall s, In s ss -> s =~ re) ->
   fold app ss [] =~ Star re.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  
+  intros T ss.
+  induction ss.
+  intros.
+  auto. simpl. apply MStar0.
+  intros.
+  auto. simpl.
+  specialize (IHss re).
+  assert(forall s: list T, In s ss -> s =~ re).
+  intros.
+  specialize (H s).
+  rewrite in_inv in H.
+  (* stuff fucks up here *)
+  destruct H.
+  right. exact H0.
+  exact MEmpty.
+  apply MChar.
+  apply MApp.
+  exact e1.
+  exact e2.
+  apply MUnionL.
+  exact e.
+  apply MUnionR. exact e.
+  apply MStar0.
+  apply MStarApp.
+  apply e1.
+  apply e2.
+  specialize (IHss H0).
+  specialize (H x).
+  specialize (H0 x).
+  rewrite in_inv in H.
+  destruct H.
+  left. reflexivity.
+  auto.
+  apply MStarApp.
+  apply MChar.
+  auto.
+  apply MStarApp.
+  apply MApp.
+  exact e1. exact e2.
+  exact IHss.
+  apply MStarApp.
+  apply MUnionL. exact e.
+  exact IHss.
+  apply MStarApp.
+  apply MUnionR.
+  exact e.
+  exact IHss.
+  exact IHss.
+  apply MStarApp.
+  apply MStarApp.
+  exact e1.
+  exact e2.
+  exact IHss.
+Qed.
+  
 
 (** **** Exercise: 4 stars (reg_exp_of_list)  *)
 (** Prove that [reg_exp_of_list] satisfies the following
     specification: *)
 
 
+Lemma reg_exp_of_list_fwd: forall T (s1 s2 : list T),
+    s1 =~ reg_exp_of_list s2 -> s1 = s2.
+Proof.
+  intros T s1 s2. generalize dependent s1.
+  induction s2.
+  - intros.
+    simpl in H.
+    inversion H.
+    reflexivity.
+  - intros.
+    simpl in H.
+    inversion H.
+    inversion H3.
+    specialize (IHs2 s3).
+    specialize (IHs2 H4).
+    rewrite IHs2.
+    simpl.
+    reflexivity.
+Qed.
+
+
+  
+Lemma reg_exp_of_list_bwd: forall T (s1 s2 : list T),
+    s1 = s2 -> s1 =~ reg_exp_of_list s2.
+Proof.
+  intros T s1 s2. generalize dependent s1.
+  induction s2.
+  + intros.
+    inversion H.
+    simpl.
+    apply MEmpty.
+  +  induction s1.
+  - intros.
+    inversion H.
+  - intros.
+    rewrite H.
+    simpl.
+
+    assert(x::s2 = [x] ++ s2). simpl. reflexivity.
+    rewrite H0.
+    apply MApp.
+    apply MChar.
+    inversion H.
+    specialize (IHs2 _ H3).
+    rewrite H3 in IHs2.
+    exact IHs2.
+ Qed.
+    
 Lemma reg_exp_of_list_spec : forall T (s1 s2 : list T),
   s1 =~ reg_exp_of_list s2 <-> s1 = s2.
 Proof.
