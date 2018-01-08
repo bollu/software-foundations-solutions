@@ -186,8 +186,8 @@ Proof. reflexivity. Qed.
 
 Lemma t_apply_empty:  forall A x v, @t_empty A v x = v.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros. simpl. unfold t_empty. reflexivity.
+Qed.
 
 (** **** Exercise: 2 stars, optional (t_update_eq)  *)
 (** Next, if we update a map [m] at a key [x] with a new value [v]
@@ -197,8 +197,10 @@ Proof.
 Lemma t_update_eq : forall A (m: total_map A) x v,
   (t_update m x v) x = v.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros. unfold t_update.
+  rewrite <- beq_id_refl.
+  reflexivity.
+Qed.
 
 (** **** Exercise: 2 stars, optional (t_update_neq)  *)
 (** On the other hand, if we update a map [m] at a key [x1] and then
@@ -210,8 +212,13 @@ Theorem t_update_neq : forall (X:Type) v x1 x2
   x1 <> x2 ->
   (t_update m x1 v) x2 = m x2.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  unfold t_update.
+  assert(beq_id x1 x2 = false).
+  rewrite beq_id_false_iff. exact H.
+  rewrite H0.
+  reflexivity.
+Qed.
 
 (** **** Exercise: 2 stars, optional (t_update_shadow)  *)
 (** If we update a map [m] at a key [x] with a value [v1] and then
@@ -220,13 +227,31 @@ Proof.
     to any key) as the simpler map obtained by performing just
     the second [update] on [m]: *)
 
+Lemma t_update_shadow_helper: forall A (m: total_map A) v1 v2 x key,
+    (t_update (t_update m x v1) x v2) key = (t_update m x v2) key.
+Proof.
+  intros.
+  unfold t_update.
+  assert(beq_id x key = true \/ beq_id x key = false).
+  destruct (beq_id x key).
+  left. reflexivity.
+  right. reflexivity.
+  destruct H.
+  rewrite H. reflexivity.
+  rewrite H. reflexivity.
+Qed.
+
+  
+
 Lemma t_update_shadow : forall A (m: total_map A) v1 v2 x,
     t_update (t_update m x v1) x v2
   = t_update m x v2.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
-
+  intros A m v1 v2 x.
+  extensionality t_update.
+  rewrite t_update_shadow_helper.
+  reflexivity.
+Qed.
 (** For the final two lemmas about total maps, it's convenient to use
     the reflection idioms introduced in chapter [IndProp].  We begin
     by proving a fundamental _reflection lemma_ relating the equality
@@ -238,8 +263,16 @@ Proof.
 
 Lemma beq_idP : forall x y, reflect (x = y) (beq_id x y).
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  apply iff_reflect.
+  split.
+  - intros.
+    apply beq_id_true_iff.
+    exact H.
+  - intros.
+    apply beq_id_true_iff.
+    exact H.
+Qed.
 
 (** Now, given [id]s [x1] and [x2], we can use the [destruct (beq_idP
     x1 x2)] to simultaneously perform case analysis on the result of
@@ -255,8 +288,13 @@ Proof.
 Theorem t_update_same : forall X x (m : total_map X),
   t_update m x (m x) = m.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  extensionality t_update.
+  unfold Top.t_update.
+  destruct (beq_idP x t_update).
+  rewrite e. reflexivity.
+  reflexivity.
+Qed.
 
 (** **** Exercise: 3 stars, recommended (t_update_permute)  *)
 (** Use [beq_idP] to prove one final property of the [update]
