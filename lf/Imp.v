@@ -252,7 +252,8 @@ Proof.
   intros P HP.
   try reflexivity. (* just [reflexivity] would have failed *)
   apply HP. (* we can still finish the proof in some other way *)
-Qed.
+Qed
+.
 
 (** There is no real reason to use [try] in completely manual
     proofs like these, but it is very useful for doing automated
@@ -441,14 +442,27 @@ Qed.
     it is sound.  Use the tacticals we've just seen to make the proof
     as elegant as possible. *)
 
-Fixpoint optimize_0plus_b (b : bexp) : bexp
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint optimize_0plus_b (b : bexp) : bexp :=
+  match b with
+  | BTrue => BTrue
+  | BFalse => BFalse
+  | BEq a b => BEq (optimize_0plus a) (optimize_0plus b)
+  | BLe a b => BLe (optimize_0plus a ) (optimize_0plus b)
+  | BNot b => BNot b
+  | BAnd a b=> BAnd a b
+  end.
+
+
 
 Theorem optimize_0plus_b_sound : forall b,
   beval (optimize_0plus_b b) = beval b.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  induction b; try simpl; try reflexivity;
+  try (repeat rewrite optimize_0plus_sound; try reflexivity).
+Qed.
+
+
 
 (** **** Exercise: 4 stars, optional (optimizer)  *)
 (** _Design exercise_: The optimization implemented by our
@@ -732,7 +746,7 @@ Qed.
     use of tacticals. *)
 
 Theorem aeval_iff_aevalR' : forall a n,
-  (a \\ n) <-> aeval a = n.
+  (a \\ n) <-> aeval a = n. 
 Proof.
   (* WORKED IN CLASS *)
   split.
@@ -749,6 +763,18 @@ Qed.
     [aevalR], and prove that it is equivalent to [beval].*)
 
 Inductive bevalR: bexp -> bool -> Prop :=
+  | E_BTrue : bevalR BTrue true
+  | E_BFalse : bevalR BFalse false
+  | E_BEq : forall (ae1 ae2: aexp) (n1 n2: nat),
+      aevalR ae1 n1 -> aevalR ae2 n2 -> bevalR (BEq ae1 ae2) (n1 =? n2)
+  | E_BLe : forall (ae1 ae2: aexp) (n1 n2: nat),
+      aevalR ae1 n1 -> aevalR ae2 n2 -> n1 <= n2 -> bevalR (BLe ae1 ae2) (n1 <=? n2)
+  | E_BNot : forall (be: bexp) (b: bool),
+      bevalR be b -> bevalR (BNot be) (negb b)
+  | E_BAnd : forall (be1 be2: bexp) (b1 b2: bool),
+      bevalR be1 b1 -> bevalR be2 b2 -> bevalR (BAnd be1 be2) (b1 && b2)
+                            
+
 (* FILL IN HERE *)
 .
 
