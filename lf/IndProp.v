@@ -1262,7 +1262,10 @@ Proof.
 Lemma reg_exp_of_list_spec : forall T (s1 s2 : list T),
   s1 =~ reg_exp_of_list s2 <-> s1 = s2.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  split.
+  apply reg_exp_of_list_fwd.
+  apply reg_exp_of_list_bwd.
+Qed.
 (** [] *)
 
 (** Since the definition of [exp_match] has a recursive
@@ -1343,8 +1346,39 @@ Qed.
     regular expression matches some string. Prove that your function
     is correct. *)
 
-Fixpoint re_not_empty {T : Type} (re : @reg_exp T) : bool
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Fixpoint re_not_empty {T : Type} (re : @reg_exp T) : bool :=
+  match re with
+  | EmptySet => false
+  | EmptyStr => true
+  | (Char _) => true
+  | App r1 r2 => re_not_empty r1 || re_not_empty r2
+  | Union r1 r2 => re_not_empty r1 || re_not_empty r2
+  | Star r1=> true
+  end.
+                  
+
+Lemma matches_are_nonempty: forall T (re: @reg_exp T), (exists s, s =~ re) -> (re <> EmptySet).
+  intros.
+  inversion H.
+  inversion H0; discriminate.
+Qed.
+
+
+Lemma re_not_empty_correct_fwd: forall T (re : @reg_exp T),
+    (exists s, s =~ re) -> re_not_empty re = true.
+Proof.
+  intros.
+  destruct H.
+  remember H as H0.
+  destruct H.
+  + auto.
+  + auto.
+  + auto.
+    simpl.
+    assert(re1 <> EmptySet).
+    apply matches_are_nonempty. exists s1. exact H.
+
+
 
 Lemma re_not_empty_correct : forall T (re : @reg_exp T),
   (exists s, s =~ re) <-> re_not_empty re = true.
