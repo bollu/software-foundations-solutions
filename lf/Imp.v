@@ -751,7 +751,7 @@ Proof.
   (* WORKED IN CLASS *)
   split.
   - (* -> *)
-    intros H; induction H; subst; reflexivity.
+    intros H. induction H; subst; reflexivity.
   - (* <- *)
     generalize dependent n.
     induction a; simpl; intros; subst; constructor;
@@ -772,17 +772,44 @@ Inductive bevalR: bexp -> bool -> Prop :=
   | E_BNot : forall (be: bexp) (b: bool),
       bevalR be b -> bevalR (BNot be) (negb b)
   | E_BAnd : forall (be1 be2: bexp) (b1 b2: bool),
-      bevalR be1 b1 -> bevalR be2 b2 -> bevalR (BAnd be1 be2) (b1 && b2)
-                            
+      bevalR be1 b1 -> bevalR be2 b2 -> bevalR (BAnd be1 be2) (b1 && b2).
 
-(* FILL IN HERE *)
-.
+Lemma beval_if_bevalR :forall b bv,
+    bevalR b bv -> beval b = bv.
+Proof.
+  
+  intros.
+  intros.
+  induction H; auto; repeat (try (simpl; rewrite aeval_iff_aevalR' in H, H0; subst; auto)).
+  (* BNot *)
+  destruct b; simpl; auto; rewrite IHbevalR; auto.
+  (* BAnd *)
+  simpl. rewrite IHbevalR1, IHbevalR2. reflexivity.
+Qed.
+
+
 
 Lemma beval_iff_bevalR : forall b bv,
   bevalR b bv <-> beval b = bv.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  (* Forward direction of proof  *)
+  (* --------------------------- *)
+  intros.
+  split.
+  intros.
+  induction H; auto; repeat (try (simpl; rewrite aeval_iff_aevalR' in H, H0; subst; auto)).
+  (* BNot *)
+  destruct b; simpl; auto; rewrite IHbevalR; auto.
+  (* BAnd *)
+  simpl. rewrite IHbevalR1, IHbevalR2. reflexivity.
+  (* Backward direction of proof *)
+  (* --------------------------- *)
+  intros.
+  generalize dependent bv.
+  induction b; simpl; intros; subst.
+  - apply E_BTrue.
+  - apply E_BFalse.
+  - apply E_BEq.
 
 End AExp.
 
