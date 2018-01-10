@@ -768,7 +768,7 @@ Inductive bevalR: bexp -> bool -> Prop :=
   | E_BEq : forall (ae1 ae2: aexp) (n1 n2: nat),
       aevalR ae1 n1 -> aevalR ae2 n2 -> bevalR (BEq ae1 ae2) (n1 =? n2)
   | E_BLe : forall (ae1 ae2: aexp) (n1 n2: nat),
-      aevalR ae1 n1 -> aevalR ae2 n2 -> n1 <= n2 -> bevalR (BLe ae1 ae2) (n1 <=? n2)
+      aevalR ae1 n1 -> aevalR ae2 n2 -> bevalR (BLe ae1 ae2) (n1 <=? n2)
   | E_BNot : forall (be: bexp) (b: bool),
       bevalR be b -> bevalR (BNot be) (negb b)
   | E_BAnd : forall (be1 be2: bexp) (b1 b2: bool),
@@ -809,7 +809,12 @@ Proof.
   induction b; simpl; intros; subst.
   - apply E_BTrue.
   - apply E_BFalse.
-  - apply E_BEq.
+  - apply E_BEq; rewrite aeval_iff_aevalR; reflexivity.
+  - apply E_BLe; rewrite aeval_iff_aevalR; reflexivity.
+  -  apply E_BNot. apply IHb. reflexivity.
+  - apply E_BAnd. apply IHb1. reflexivity. apply IHb2. reflexivity.
+Qed.
+
 
 End AExp.
 
@@ -1325,8 +1330,12 @@ Example ceval_example2:
     (X ::= ANum 0;; Y ::= ANum 1;; Z ::= ANum 2) / empty_state \\
     (t_update (t_update (t_update empty_state X 0) Y 1) Z 2).
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  - apply E_Seq with (t_update empty_state X 0).
+    apply E_Ass. reflexivity.
+    + apply E_Seq with (t_update (t_update empty_state X 0) Y 1).
+      apply E_Ass. reflexivity.
+      apply E_Ass. reflexivity.
+Qed.
 
 (** **** Exercise: 3 stars, advanced (pup_to_n)  *)
 (** Write an Imp program that sums the numbers from [1] to
@@ -1334,16 +1343,42 @@ Proof.
    Prove that this program executes as intended for [X] = [2]
    (this is trickier than you might expect). *)
 
-Definition pup_to_n : com
-  (* REPLACE THIS LINE WITH ":= _your_definition_ ." *). Admitted.
+Definition pup_to_n : com :=
+  (Y ::= ANum 0;;
+   WHILE BLe (ANum 1) (AId X)
+        DO (Y ::= (APlus (AId Y) (AId X)));;
+              X ::= AMinus (AId X) (ANum 1)
+        END).
 
 Theorem pup_to_2_ceval :
   pup_to_n / (t_update empty_state X 2) \\
     t_update (t_update (t_update (t_update (t_update (t_update empty_state
       X 2) Y 0) Y 2) X 1) Y 3) X 0.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  unfold pup_to_n.
+  - apply E_Seq with (t_update (t_update empty_state X 2) Y 0).
+    apply E_Ass. simpl. reflexivity.
+    apply E_WhileTrue with (st' := (t_update (t_update (t_update (t_update empty_state X 2) Y 0) Y 2) X 1)).
+    simpl. reflexivity.
+    + apply E_Seq with (t_update (t_update (t_update empty_state X 2) Y 0) Y 2).
+      apply E_Ass.
+      auto.
+      apply E_Ass.
+      auto.
+    + apply E_WhileTrue with (st' :=  t_update
+    (t_update
+       (t_update (t_update (t_update (t_update empty_state X 2) Y 0) Y 2) X 1) Y
+       3) X 0).
+      simpl. reflexivity.
+     apply E_Seq with (t_update
+       (t_update (t_update (t_update (t_update empty_state X 2) Y 0) Y 2) X 1) Y
+       3).
+     apply E_Ass.
+     auto.
+     apply E_Ass. auto.
+     apply E_WhileFalse.
+     simpl. reflexivity.
+Qed.
 
 (* ================================================================= *)
 (** ** Determinism of Evaluation *)
