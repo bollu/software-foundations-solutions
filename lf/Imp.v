@@ -1532,11 +1532,10 @@ Theorem no_whiles_ifb_splits_over_terms: forall (c1 c2: com) (cond: bexp),
   induction c1; induction c2; try(simpl; auto).
 Qed.
 
-Theorem no_whiles_eqv:
-   forall c, no_whiles c = true <-> no_whilesR c.
+
+Theorem no_whiles_fwd:
+   forall c, no_whiles c = true -> no_whilesR c.
 Proof.
-  intros.
-  split.
   (* Forward direction *)
   (* ------------------ *)
   intros.
@@ -1561,15 +1560,80 @@ Proof.
     apply (IHc1 H). apply (IHc2 H0).
     (* while *)
   -  simpl in H. inversion H.
-   
-  (* Backward direction *)
-     (* ------------------ *)
-  - intros.
-    induction c; try(simpl; reflexivity).
-    (* seq *)
+Qed.
+
+Theorem no_whilesR_distributes_over_seq:
+  forall (com1 com2: com), no_whilesR (com1 ;; com2) -> no_whilesR com1 /\ no_whilesR com2.
+Proof.
+  intros.
+  split.
+  - induction com1.
+    + apply no_whiles_CSkipR.
+    + apply no_whiles_CAss.
+    + inversion H. exact H2.
+    + apply no_whiles_CIf; inversion H; inversion H2; assumption.
+    + inversion H. inversion H2.
+  - induction com2.
+    + apply no_whiles_CSkipR.
+    + apply no_whiles_CAss.
+    + inversion H. exact H3.
+    + apply no_whiles_CIf; inversion H; inversion H3; assumption.
+    + inversion H. inversion H3.
+Qed.
 
 
-  (* FILL IN HERE *) Admitted.
+
+Theorem no_whilesR_distributes_over_if:
+  forall (com1 com2: com) (cond: bexp), no_whilesR (IFB cond THEN com1 ELSE  com2 FI ) -> no_whilesR com1 /\ no_whilesR com2.
+Proof.
+  intros.
+  split.
+  - induction com1.
+    + apply no_whiles_CSkipR.
+    + apply no_whiles_CAss.
+    + inversion H. exact H2.
+    + apply no_whiles_CIf; inversion H; inversion H2; assumption.
+    + inversion H. inversion H2.
+  - induction com2.
+    + apply no_whiles_CSkipR.
+    + apply no_whiles_CAss.
+    + inversion H. assumption.
+    + apply no_whiles_CIf; inversion H; inversion H4; assumption.
+    + inversion H; inversion H4.
+Qed.
+
+Theorem no_whiles_bwd:
+   forall c, no_whilesR c -> no_whiles c = true.
+Proof.
+  intros.
+  induction c.
+  (* SKIP *)
+  - auto.
+  (* ASSIGN *)
+  - auto.
+
+   (* SEQ *)
+  - auto. apply no_whilesR_distributes_over_seq in H. destruct H.
+    simpl. rewrite (IHc1 H). rewrite (IHc2 H0). auto.
+
+    (* IF *)
+  - auto. apply no_whilesR_distributes_over_if in H. destruct H.
+    simpl. rewrite (IHc1 H). rewrite (IHc2 H0). auto.
+
+    (* WHILE *)
+  - auto. inversion H.
+Qed.
+
+
+Theorem no_whiles_eqv:
+   forall c, no_whiles c = true <-> no_whilesR c.
+Proof.
+  intros.
+  split.
+  apply no_whiles_fwd.
+  apply no_whiles_bwd.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 4 stars (no_whiles_terminating)  *)
