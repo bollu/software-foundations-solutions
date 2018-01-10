@@ -1564,6 +1564,9 @@ Proof.
    
   (* Backward direction *)
      (* ------------------ *)
+  - intros.
+    induction c; try(simpl; reflexivity).
+    (* seq *)
 
 
   (* FILL IN HERE *) Admitted.
