@@ -1455,6 +1455,7 @@ Proof.
 
 (** **** Exercise: 3 stars, recommended (XtimesYinZ_spec)  *)
 (** State and prove a specification of [XtimesYinZ]. *)
+(** TODO **)
 
 (* FILL IN HERE *)
 (** [] *)
@@ -1465,15 +1466,19 @@ Theorem loop_never_stops : forall st st',
 Proof.
   intros st st' contra. unfold loop in contra.
   remember (WHILE BTrue DO SKIP END) as loopdef
-           eqn:Heqloopdef.
+                                          eqn:Heqloopdef.
+  
 
   (** Proceed by induction on the assumed derivation showing that
       [loopdef] terminates.  Most of the cases are immediately
       contradictory (and so can be solved in one step with
       [inversion]). *)
-
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  induction contra; try (inversion Heqloopdef).
+  rewrite H1 in H. simpl in H. inversion H.
+  rewrite H1 in H.
+  specialize (IHcontra2 Heqloopdef).
+  inversion IHcontra2.
+Qed.
 
 (** **** Exercise: 3 stars (no_whilesR)  *)
 (** Consider the following function: *)
@@ -1497,13 +1502,54 @@ Fixpoint no_whiles (c : com) : bool :=
     [no_whilesR c] is provable exactly when [c] is a program with no
     while loops.  Then prove its equivalence with [no_whiles]. *)
 
+(*   | no_whiles_CBreakR: no_whilesR CBreak *)
+
 Inductive no_whilesR: com -> Prop :=
+| no_whiles_CSkipR: no_whilesR CSkip
+| no_whiles_CAss:
+    forall (name: id) (rhs: aexp),
+      no_whilesR (CAss name rhs)
+| no_whiles_CIf: 
+    forall (tcom ecom: com) (cond: bexp),
+      no_whilesR tcom ->
+      no_whilesR ecom -> no_whilesR (CIf cond tcom ecom)
+| no_whiles_CSeq:
+    forall (com1 com2: com),
+    no_whilesR com1 -> no_whilesR com2 -> no_whilesR (CSeq com1 com2). 
  (* FILL IN HERE *)
-.
+
+
+Theorem no_whiles_cseq_splits_over_terms: forall (c1 c2: com),
+    no_whiles (c1 ;; c2) = true -> no_whiles c1 && no_whiles c2 = true.
+  intros.
+  induction c1; induction c2; try(simpl; auto).
+Qed.
 
 Theorem no_whiles_eqv:
    forall c, no_whiles c = true <-> no_whilesR c.
 Proof.
+  intros.
+  split.
+  (* Forward direction *)
+  (* ------------------ *)
+  intros.
+  induction c.
+  (* SKIP *)
+  - exact no_whiles_CSkipR.
+  (* Assign *)
+  - apply no_whiles_CAss.
+    (* Seq *)
+  - apply no_whiles_cseq_splits_over_terms in H.
+    apply  andb_prop in H.
+    destruct H.
+    apply no_whiles_CSeq.
+    apply (IHc1 H).
+    apply (IHc2 H0).
+  - (* while *)
+
+
+  (* Backward direction *)
+  (* ------------------ *)
   (* FILL IN HERE *) Admitted.
 (** [] *)
 
