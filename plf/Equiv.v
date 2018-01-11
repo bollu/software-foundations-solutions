@@ -128,8 +128,15 @@ Theorem skip_right: forall c,
     (c ;; SKIP)
     c.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  unfold cequiv.
+  intros st st'.
+  split.
+  - (* -> *)
+    intros. inversion H. subst. inversion H5. subst. assumption.
+  - (* <- *)
+    intros. apply E_Seq with st'. assumption. apply E_Skip.
+Qed.
 
 (** Similarly, here is a simple transformation that optimizes [IFB]
     commands: *)
@@ -215,8 +222,25 @@ Theorem IFB_false: forall b c1 c2,
     (IFB b THEN c1 ELSE c2 FI)
     c2.
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  split.
+  (* -> *)
+  intros.
+  inversion H0.
+  unfold bequiv in H.
+  rewrite H in H6.
+  inversion H6.
+  assumption.
+
+  (* <- *)
+  intros.
+  apply E_IfFalse.
+  unfold bequiv in H.
+  rewrite H.
+  simpl. reflexivity.
+
+  assumption.
+Qed.
 
 (** **** Exercise: 3 stars (swap_if_branches)  *)
 (** Show that we can swap the branches of an IF if we also negate its
@@ -227,7 +251,32 @@ Theorem swap_if_branches: forall b e1 e2,
     (IFB b THEN e1 ELSE e2 FI)
     (IFB BNot b THEN e2 ELSE e1 FI).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros. split.
+  (* -> *)
+  intros.
+  inversion H.
+  subst.
+  assert (beval st (BNot b) = false).
+  simpl.
+  rewrite H5. reflexivity.
+  apply E_IfFalse.
+  assumption.
+  assumption.
+  apply E_IfTrue.
+  simpl.
+  rewrite H5. reflexivity. assumption.
+
+  (* <- *)
+  intros.
+  inversion H.
+  apply E_IfFalse. inversion H5. simpl in H8.
+  assert(negb (negb (beval st b)) = false).
+  rewrite H8. simpl. reflexivity.
+  rewrite negb_involutive in H7. assumption. assumption.
+
+  simpl in H5. rewrite negb_false_iff in H5.
+  apply E_IfTrue. assumption. assumption.
+Qed.
 (** [] *)
 
 (** For [WHILE] loops, we can give a similar pair of theorems.  A loop
@@ -324,7 +373,25 @@ Theorem WHILE_true: forall b c,
     (WHILE b DO c END)
     (WHILE BTrue DO SKIP END).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold cequiv. intros.
+  split.
+  (* -> *)
+  intros.
+  inversion H0.
+  apply WHILE_true_nonterm in H0. contradiction. assumption.
+  apply WHILE_true_nonterm in H0. contradiction. assumption.
+
+  (* <- *)
+  intros.
+  inversion H0;
+    apply WHILE_true_nonterm in H0. contradiction.
+  unfold bequiv. intros. reflexivity.
+  apply WHILE_true_nonterm in H7. contradiction.
+  unfold bequiv. reflexivity.
+  unfold bequiv. reflexivity.
+Qed.
+                                                 
 (** [] *)
 
 (** A more interesting fact about [WHILE] commands is that any finite
