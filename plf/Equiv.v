@@ -426,7 +426,27 @@ Proof.
 Theorem seq_assoc : forall c1 c2 c3,
   cequiv ((c1;;c2);;c3) (c1;;(c2;;c3)).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold cequiv. intros. split.
+  (* -> *)
+  intros.
+  inversion H.
+  inversion H2.
+
+  apply E_Seq with (st' := st'1).
+  assumption.
+  apply E_Seq with (st' := st'0).
+  assumption.
+  assumption.
+
+  (* <- *)
+  intros.
+  inversion H. inversion H5.
+  apply E_Seq with (st' := st'1).
+  apply E_Seq with (st' := st'0).
+  repeat (assumption). assumption. assumption.
+Qed.
+
 (** [] *)
 
 (** Proving program properties involving assignments is one place
