@@ -765,8 +765,30 @@ Theorem CSeq_congruence : forall c1 c1' c2 c2',
   cequiv c1 c1' -> cequiv c2 c2' ->
   cequiv (c1;;c2) (c1';;c2').
 Proof.
-  (* FILL IN HERE *) Admitted.
-(** [] *)
+  intros.
+  unfold cequiv in H.
+  unfold cequiv in H0.
+  unfold cequiv.
+  intros.
+  split.
+  (* -> *)
+  intros.
+  inversion H1.
+  apply E_Seq with (st' := st'0).
+  specialize (H st st'0).
+  apply H. assumption.
+  specialize (H0 st'0 st').
+  apply H0.
+  assumption.
+  (* <- *)
+  intros.
+  inversion H1.
+  apply E_Seq with (st' := st'0).
+  subst.
+  specialize (H st st'0).
+  apply H. assumption.
+  apply (H0 _ _ ). assumption.
+Qed.
 
 (** **** Exercise: 3 stars (CIf_congruence)  *)
 Theorem CIf_congruence : forall b b' c1 c1' c2 c2',
