@@ -471,12 +471,39 @@ Proof.
          rewrite t_update_same. reflexivity.
 Qed.
 
+
 (** **** Exercise: 2 stars, recommended (assign_aequiv)  *)
 Theorem assign_aequiv : forall X e,
   aequiv (AId X) e ->
   cequiv SKIP (X ::= e).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold cequiv.
+  intros.
+  split.
+  (* -> *)
+  intros.
+  unfold aequiv in H.
+  inversion H0.
+  replace ((X ::= e ) / st' \\ st') with ((X ::= e) / st' \\ t_update st' X (aeval st' (AId X))).
+  apply E_Ass.
+  specialize (H st').
+  rewrite H. reflexivity.
+  specialize (H st').
+  rewrite t_update_same. reflexivity.
+  intros.
+  unfold aequiv in H.
+  inversion H0.
+  specialize (H st).
+  rewrite H5 in H.
+  unfold aeval in H.
+  assert (st = st').
+  rewrite <- H in H4.
+  rewrite t_update_same in H4. assumption.
+  rewrite H4. rewrite H6. apply E_Skip.
+Qed.
+
+
 (** [] *)
 
 (** **** Exercise: 2 stars (equiv_classes)  *)
