@@ -796,7 +796,37 @@ Theorem CIf_congruence : forall b b' c1 c1' c2 c2',
   cequiv (IFB b THEN c1 ELSE c2 FI)
          (IFB b' THEN c1' ELSE c2' FI).
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold cequiv.
+  intros.
+  split.
+  (* -> *)
+  intros.
+  inversion H2;
+
+  unfold cequiv in H0;
+  unfold cequiv in H1;
+  unfold bequiv in H.
+
+  apply E_IfTrue.
+  specialize (H st). rewrite <- H. assumption.
+  specialize (H0 st st').
+  rewrite <- H0. assumption.
+
+  apply E_IfFalse. specialize (H st). rewrite <- H. assumption.
+  specialize (H1 st st'). rewrite <- H1. assumption.
+
+
+  (* <- *)
+  intros.
+  inversion H2.
+  apply E_IfTrue.
+  unfold bequiv in H. specialize (H st). rewrite -> H. assumption.
+  unfold cequiv in H0. apply H0. assumption.
+  apply E_IfFalse. unfold bequiv in H. rewrite H. assumption.
+  unfold cequiv in H1. apply H1. assumption.
+Qed.
+
 (** [] *)
 
 (** For example, here are two equivalent programs and a proof of their
