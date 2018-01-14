@@ -370,7 +370,7 @@ Proof.
     "edit" its text.  Instead, we can achieve the same effect by
     evaluating [P] in an updated state: *)
 
-Definition assn_sub X a P : Assertion :=
+Definition assn_sub (X: id) (a : aexp) (P : Assertion) : Assertion :=
   fun (st : state) =>
     P (t_update st X (aeval st a)).
 
@@ -437,7 +437,7 @@ Notation "P [ X |-> a ]" := (assn_sub X a P) (at level 10).
 
 (** We can prove formally that this rule is indeed valid. *)
 
-Theorem hoare_asgn : forall Q X a,
+Theorem hoare_asgn : forall (Q : Assertion) (X : id) (a : aexp),
   {{Q [X |-> a]}} (X ::= a) {{Q}}.
 Proof.
   unfold hoare_triple.
@@ -487,8 +487,21 @@ Proof.
     [a], and your counterexample needs to exhibit an [a] for which 
     the rule doesn't work.) *)
 
+
 (* FILL IN HERE *)
-(** [] *)
+(** [Counter example: {{ a = -X }}  X ::= -X {{ X = -X }} ] **)
+
+
+(** Consider what the regular rule says.
+
+Let a = -X.
+
+      ------------------------------ (hoare_asgn)
+      {{Q [X |-> a]}} X ::= a {{Q}}
+
+**)
+
+(** ================================================== **)
 
 (** **** Exercise: 3 stars, advanced (hoare_asgn_fwd)  *)
 (** However, by using a _parameter_ [m] (a Coq number) to remember the 
@@ -508,13 +521,32 @@ Proof.
 *)
 
 Theorem hoare_asgn_fwd :
-  forall m a P,
+  forall (m: nat) (a:aexp) (P: Assertion),
   {{fun st => P st /\ st X = m}}
     X ::= a
   {{fun st => P (t_update st X m) 
             /\ st X = aeval (t_update st X m) a }}.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  intros.
+  unfold hoare_triple.
+  intros.
+  split.
+  inversion H.
+  rewrite t_update_shadow.
+  destruct H0.
+  rewrite <- H6.
+  rewrite t_update_same.
+  subst.
+  exact H0.
+  inversion H.
+  rewrite t_update_shadow.
+  destruct H0.
+  rewrite <- H6.
+  rewrite t_update_same.
+  rewrite t_update_eq.
+  subst. reflexivity.
+Qed.
+
 (** [] *)
 
 (** **** Exercise: 2 stars, advanced (hoare_asgn_fwd_exists)  *)
@@ -537,7 +569,17 @@ Theorem hoare_asgn_fwd_exists :
                 st X = aeval (t_update st X m) a }}.
 Proof.
   intros a P.
-  (* FILL IN HERE *) Admitted.
+  unfold hoare_triple.
+  intros.
+  exists (st X).
+  inversion H.
+  rewrite t_update_shadow.
+  rewrite t_update_same.
+  split.
+  assumption.
+  rewrite H4. rewrite H5. rewrite <- H4.
+  rewrite t_update_eq. reflexivity.
+Qed.
 (** [] *)
 
 (* ================================================================= *)
