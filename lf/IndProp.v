@@ -1377,6 +1377,7 @@ Proof.
     simpl.
     assert(re1 <> EmptySet).
     apply matches_are_nonempty. exists s1. exact H.
+Admitted.
 
 
 
@@ -1522,7 +1523,8 @@ Lemma MStar'' : forall T (s : list T) (re : reg_exp),
     s = fold app ss []
     /\ forall s', In s' ss -> s' =~ re.
 Proof.
-  (* FILL IN HERE *) Admitted.
+  (* FILL IN HERE *)
+Admitted.
 (** [] *)
 
 (** **** Exercise: 5 stars, advanced (pumping)  *)
@@ -1605,7 +1607,160 @@ Proof.
        | re | s1 s2 re Hmatch1 IH1 Hmatch2 IH2 ].
   - (* MEmpty *)
     simpl. omega.
-  (* FILL IN HERE *) Admitted.
+
+  - (* Char *)
+    intros.
+    simpl in *.
+    omega.
+
+  - (* app *)
+    intros LENGTH_APP.
+    simpl in LENGTH_APP.
+    rewrite app_length in LENGTH_APP.
+
+    (* @sahiti, a good example of how proof automation helps
+    intution *)
+    assert (NATS_INEQ: forall a b c d, a + b <= c + d -> a <= c \/ b <= d).
+    intros.
+    omega.
+
+    specialize (NATS_INEQ (pumping_constant re1)
+                          (pumping_constant re2)
+                          (length s1)
+                          (length s2)).
+
+    destruct (NATS_INEQ LENGTH_APP) as [RE1_LENGTH_INEQ |
+                                        RE2_LENGTH_INEQ].
+    (* At this point, we need a without loss of
+    generality tactic to be able to do things *)
+
+
+    + specialize (IH1 RE1_LENGTH_INEQ).
+      destruct IH1 as [s2' [s3' [s4' [S1_DECOMP [S3'_NOT_EMPTY
+                                                   PUMP_RE1]]]]].
+      exists s2'.
+      exists s3'.
+      exists (s4' ++ s2).
+      repeat split; simpl; auto.
+      * rewrite S1_DECOMP.
+        repeat rewrite <- app_assoc.
+        auto.
+
+        
+
+      * intros.
+        replace (s2' ++ napp m s3' ++ s4' ++ s2) with
+            ((s2' ++ napp m s3' ++ s4') ++ s2); auto;
+          try (repeat rewrite app_assoc; auto).
+        constructor; auto.
+        rewrite <- app_assoc; auto.
+
+    + (* repeat same argument with IH2 *)
+    specialize (IH2 RE2_LENGTH_INEQ).
+      destruct IH2 as [s2' [s3' [s4' [S2_DECOMP [S3'_NOT_EMPTY
+                                                   PUMP_RE2]]]]].
+      exists (s1 ++ s2').
+      exists s3'.
+      exists s4'.
+      repeat split; simpl; auto.
+      * rewrite S2_DECOMP.
+        repeat rewrite <- app_assoc.
+        auto.
+
+        
+
+      * intros.
+        replace ((s1 ++ s2') ++ napp m s3' ++ s4') with
+            (s1 ++ (s2' ++ napp m s3' ++ s4')); auto;
+          try (repeat rewrite app_assoc; auto; fail).
+        constructor; auto.
+
+  - (* union left *)
+    intros LENGTH.
+    simpl in LENGTH.
+
+    assert (RE1_LENGTH: pumping_constant re1 <= length s1).
+    omega.
+
+    specialize (IH RE1_LENGTH).
+    destruct IH as [s11 [s12 [s13 [S2_DECOMPOSE [S13_NON_EMPTY
+                                                    S1_PUMP]]]]].
+
+    exists s11, s12, s13.
+    repeat split; auto.
+    intros.
+    apply MUnionL; auto.
+
+  - (* union right *)
+    intros LENGTH.
+    simpl in LENGTH.
+
+    assert (RE2_LENGTH: pumping_constant re2 <= length s2).
+    omega.
+
+    specialize (IH RE2_LENGTH).
+    destruct IH as [s21 [s22 [s23 [S2_DECOMPOSE [S22_NON_EMPTY
+                                                    S2_PUMP]]]]].
+
+    exists s21, s22, s23.
+    repeat split; auto.
+    intros.
+    apply MUnionR; auto.
+
+  - intros.
+    simpl in H.
+    omega.
+
+  - intros.
+    simpl in H.
+    assert (S1_S2_BOTH_NOT_EMPTY:
+              forall {A: Type}
+                (l1 l2: list A)
+                (LEN_LB_0: 1 <= length (l1 ++ l2)),
+                l1 <> [] \/ l2 <> []).
+    intros.
+    destruct l1; destruct l2; auto; simpl in LEN_LB_0; try omega.
+    right. discriminate.
+    left. discriminate.
+    left. discriminate.
+
+
+    destruct (S1_S2_BOTH_NOT_EMPTY T s1 s2 H) as
+        [S1_NONEMPTY | S2_NONEMPTY].
+    + (* s1 <> [] *)
+      exists [], s1, s2.
+      repeat split; simpl; auto.
+      induction m; simpl; auto.
+      rewrite <- app_assoc.
+      constructor; auto.
+
+    + (* s2 <> [] *)
+      assert (LENGTH_S2: length s2 >= 1).
+      destruct s2; simpl; auto; try contradiction; try omega.
+
+      assert (IH2_DERIVE:
+           exists s1 s3 s4 : list T,
+          s2 = s1 ++ s3 ++ s4 /\
+          s3 <> [ ] /\
+          (forall m : nat, s1 ++ napp m s3 ++ s4 =~ Star re)).
+      apply IH2; simpl; auto.
+
+      destruct IH2_DERIVE as [s1' [s3' [s4' [S2_DECOMPOSE
+                                               [S3_NONNULL
+                                                  STAR]]]]].
+
+      exists (s1 ++ s1').
+      exists s3'.
+      exists s4'.
+      repeat split; simpl; auto.
+      * rewrite S2_DECOMPOSE.
+        rewrite <- app_assoc; auto.
+
+      * intros.
+        rewrite <- app_assoc.
+        specialize (STAR m).
+        constructor; auto.
+Qed.
 
 End Pumping.
 (** [] *)
